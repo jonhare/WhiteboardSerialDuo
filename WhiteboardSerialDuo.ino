@@ -92,6 +92,8 @@ void parseCommand(String command) {
       moveLeft();
    } else if (inputString=="d") {
       moveRight();
+   } else if (inputString=="p") {
+      drawPattern();
    } else if (inputString.startsWith("m")) {
      currentPoint.x = getValue(inputString, ':', 1).toInt();
      currentPoint.y = getValue(inputString, ':', 2).toInt();
@@ -100,19 +102,27 @@ void parseCommand(String command) {
 }
 
 void movePen() {
-  Serial.println("X: " + String(currentPoint.x));
-  Serial.println("Y: " + String(currentPoint.y));
+//  Serial.println("X: " + String(currentPoint.x));
+//  Serial.println("Y: " + String(currentPoint.y));
+Serial.println(String(currentPoint.x) + " " + String(currentPoint.y));
 
   MotorVal target = getStepsFor(currentPoint);
   m1.moveTo(target.M1);
-  m1.setSpeed(100);
-  //m1.setSpeed(m1.speed()>0?100:-100);
   m2.moveTo(target.M2);
-  m2.setSpeed(100);
-  //m2.setSpeed(m2.speed()>0?100:-100);
 
-  Serial.println("M1: " + String(target.M1));
-  Serial.println("M2: " + String(target.M2));
+  long d1 = m1.distanceToGo();
+  long d2 = m2.distanceToGo();
+  double s1 = 100;
+  double s2 = 100;
+
+  if (d1<d2) {
+    s1 = s2*(double)d1/(double)d2;
+  } else {
+    s2 = s1*(double)d2/(double)d1;
+  }
+
+  m1.setSpeed((float)s1);
+  m2.setSpeed((float)s2);
 }
 
 void moveLeft() {
@@ -173,4 +183,90 @@ String getValue(String data, char separator, int index) {
  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
+void drawPattern() {
+  int i,j;
+//
+//  for (i=0; i<5; i++) moveLeft();
+//  while (m1.distanceToGo() != 0 && m2.distanceToGo() != 0) {
+//    m1.runSpeedToPosition();
+//    m2.runSpeedToPosition();
+//  }
+//
+//  for (i=0; i<10; i++) {
+//    Serial.println("Moving Down");
+//    moveDown();
+//    while (m1.distanceToGo() != 0 && m2.distanceToGo() != 0) {
+//      m1.runSpeedToPosition();
+//      m2.runSpeedToPosition();
+//    }
+//      
+//    for (j=0; j<10; j++) {
+//      if (i%2==0) moveRight();
+//      else moveLeft();
+//      
+//      while (m1.distanceToGo() != 0 && m2.distanceToGo() != 0) {
+//        m1.runSpeedToPosition();
+//        m2.runSpeedToPosition();
+//      }
+//    }
+//  }
+  int dx = 30;
+  float dyf = 0.75;
+  float dyf2 = 0.5;
+  int points[20][2] = { 
+                      {577,200}, 
+                      {577+(int)(dyf*dx), 200+dx},
+                      {577+(int)(dyf*dx-dyf2*dyf*dx),200+dx},
+                      {577+(int)(2*dyf*dx), 200+2*dx},
+                      {577+(int)(2*dyf*dx-2*dyf2*dyf*dx), 200+2*dx},
+                      {577+(int)(3*dyf*dx), 200+3*dx},
+                      {577+(int)(3*dyf*dx-3*dyf2*dyf*dx), 200+3*dx},
+                      {577+(int)(4*dyf*dx), 200+4*dx},
+                      {577+dx/2, 200+4*dx},
+                      {577+dx/2, 200+5*dx},
+                      {577-dx/2, 200+5*dx},
+                      {577-dx/2, 200+4*dx},
+                      {577-(int)(4*dyf*dx), 200+4*dx},
+                      {577-(int)(3*dyf*dx-3*dyf2*dyf*dx), 200+3*dx},
+                      {577-(int)(3*dyf*dx), 200+3*dx},
+                      {577-(int)(2*dyf*dx-2*dyf2*dyf*dx), 200+2*dx},
+                      {577-(int)(2*dyf*dx), 200+2*dx},
+                      {577-(int)(dyf*dx-dyf2*dyf*dx), 200+dx},
+                      {577-(int)(dyf*dx), 200+dx},
+                      {577,200}
+//{577, 200},
+//{584, 210},
+//{580, 210},
+//{592, 220},
+//{584, 220},
+//{599, 230},
+//{588, 230},
+//{607, 240},
+//{627, 240},
+//{627, 250},
+//{527, 250},
+//{527, 240},
+//{547, 240},
+//{566, 230},
+//{555, 230},
+//{570, 220},
+//{562, 220},
+//{574, 210},
+//{570, 210},
+//{577, 200}
+                    }; 
+
+  for (i=0; i<20; i++) {
+    currentPoint.x = points[i][0];
+    currentPoint.y = points[i][1];
+    movePen();
+    while (!(m1.distanceToGo() == 0 && m2.distanceToGo() == 0)) {
+//      Serial.println(String(m1.distanceToGo()) + " " + String(m2.distanceToGo()));
+      if (m1.distanceToGo() != 0)
+        m1.runSpeedToPosition();
+       if (m2.distanceToGo() != 0)
+        m2.runSpeedToPosition();
+     }
+  }
+}
 
